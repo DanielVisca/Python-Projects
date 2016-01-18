@@ -1,0 +1,117 @@
+import math
+
+EMPTY = '-'
+
+def is_between(value, min_value, max_value):
+    """
+    (number, number, number) -> bool
+
+    Precondition: min_value <= max_value
+
+    Return True if and only if value is between min_value and max_value,
+    or equal to one or both of them.
+
+    >>>is_between(1.0, 0.0, 2)
+    True
+    >>>is_between(0, 1, 2)
+    False
+    """
+    return min_value <= value and value <= max_value
+    
+def game_board_full(game_board):
+    """
+    (str)->bool
+    
+    Return True iff all cells are used
+    
+    >>>game_board_full('x-oxooxox')
+    False
+    >>>game_board_full('xxooooxxx')
+    True
+    """
+    return not(EMPTY in game_board)
+       
+def get_board_size(board_size):
+    """
+    (str)->int
+    
+    Return the length of the square board
+    
+    >>>get_board_size('xxxoooxxx')
+    3
+    >>>get_board_size('xxxxooooxxxxoooo')
+    4
+    """
+    return int(math.sqrt(len(board_size)))
+
+def make_empty_board(board_size):
+    """
+    (int)->str
+    
+    Return an empty board when given board length that is:
+    between and including one to nine
+    
+    >>>make_empty_board(2)
+    '----'
+    >>>make_empty_board(1)
+    '-'
+    """
+    if 1 <= board_size <= 9:
+        return (board_size**2)*EMPTY
+    
+def get_position(row_index,col_index,board_size):
+    """
+    (int, int, int) -> int 
+    
+    Return the str_index of the cell in the string representation of the game:
+    board corresponding to the given row and column indices
+    
+    >>>get_position(1,1,3)
+    0
+    >>>get_position(4,2,4)
+    13
+    """
+    str_index = (row_index - 1) * board_size + col_index - 1
+    return str_index
+    
+def make_move(symbol,row,column,game_board):
+    """
+    (str, int, int, str) -> str
+    
+    Return the tic-tac-toe game board that results when the given:
+    symbol is placed at the given cell position in the given tic-tac-toe:
+    game board. 
+    
+    >>>make_move('x',1,1,'ooooooooo')
+    'xoooooooo'
+    >>>make_move('o',2,2,'---------')
+    '----o----'
+    """
+    size = get_board_size(game_board)
+    return game_board[:get_position(row,column,size)]+symbol+\
+           game_board[(get_position(row,column,size)+1):]
+   
+def extract_line(game_board,direction,row_or_column):
+    """
+    (str, str, int) -> str 
+    
+    Return the characters that make up the specified row (when the second:
+    parameter is 'across'), column (when the second parameter is 'down') or:
+    diagonal from the given tic-tac-toe game board. 
+     
+    >>>extract_line('xxxxoooxx','across',1)
+    'xxx'
+    >>>extract_line('xoooxooox','down_diagonal',0)
+    'xxx'
+    """
+    size = get_board_size(game_board)
+    
+    if direction =='across':
+        return game_board[size*(row_or_column-1):
+                          size*(row_or_column)]
+    if direction =='down':
+        return game_board[(row_or_column-1)::size]
+    if direction =='down_diagonal':
+        return game_board[0::size+1]
+    if direction =='up_diagonal':
+        return game_board[-(size):0:-size+1]

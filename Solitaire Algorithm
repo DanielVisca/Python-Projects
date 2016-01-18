@@ -1,0 +1,409 @@
+ENCRYPT = 'e'
+DECRYPT = 'd'
+
+def clean_message(message):
+    """
+    (str) -> str
+    
+    Return a copy of the message that includes only its alphabetical characters,
+    where each of those characters has been converted to uppercase.
+
+    >>>clean_message('HelloC3Po')
+    'HELLOCPO'
+    >>>clean_message('H8ter s')
+    'HTERS'
+    """
+    clean_message = ''
+    
+    for char in message:
+        if char.isalpha():
+                clean_message += char
+                
+    return clean_message.upper().strip()
+
+def encrypt_letter(letter, keystream):
+    """
+    (str, int) -> str
+    
+    Precondition: Letter must be capital
+    
+    Return the keystream value added the index of the letter to encrypt the
+    letter
+    
+    >>>encrypt_letter('A', 7)
+    'H'
+    >>>encrypt_letter('W', 4)
+    'A'
+    """
+    #Translates letters to ordinal as seen in the ceasar cipher
+    letter_to_ord = ord(letter) - ord('A')
+    
+    # take the ordinal and add the keystream
+    new_ord = (letter_to_ord + keystream) % 26
+    
+    # translate back to character
+    new_letter = chr(new_ord + ord('A'))
+    
+    return new_letter   
+ 
+def decrypt_letter(letter, keystream):
+    """
+    (str, int) -> str
+    
+    Precondition: letter is capitalized
+    
+    >>>decrypt_letter('H', 7)
+    'A'
+    >>>decrypt_letter('A', 4)
+    'W'
+    """
+    # Translate letter to an ordinal
+    letter_to_ord = ord(letter) - ord('A')
+    
+    # take the ordinal and minus the keystream
+    new_ord = (letter_to_ord - keystream) % 26
+    
+    # translate back to character
+    new_letter = chr(new_ord + ord('A'))
+    
+    return new_letter
+
+def swap_cards(deck, card_index):
+    """
+    (list of int, int) -> NoneType
+    
+    Swap the card at the index with the card that follows it.
+    Consider the deck as circular
+    
+    >>>deck = [1,2,3,4,5]
+    >>>swap_cards(deck, 2)
+    >>>deck
+    [1,2,4,3,5]
+    
+    >>>deck = [1,2,3]
+    >>>swap_cards(deck, 4)
+    >>>deck
+    Error: out of range
+    """
+    card = deck[card_index]
+    
+    #this makes the deck circular when swapping
+    if card_index == len(deck) - 1:
+            deck[card_index] = deck[0]
+            deck[0] = card
+    else:
+        deck[card_index] = deck[card_index + 1]
+        deck[card_index + 1] = card
+    
+def get_small_joker_value(deck):
+    """
+    (list of int) -> int
+    
+    Return the value of the second highest card
+    
+    >>>get_small_joker_value([1,0,2,3,4,5,6])
+    5
+    >>>get_small_joker_value([7,3,2,54,8])
+    8
+    """
+    small_joker = 0
+    
+    for card in deck:
+        if card > small_joker and card != max(deck):
+            small_joker = card
+            
+    return small_joker
+
+def get_big_joker_value(deck):
+    """
+    (list of int) -> int
+    
+    Return the value of the highest number in the list
+    
+    >>>get_big_joker_value([1,0,2,3,4,5,6])
+    6
+    >>>get_big_joker_value([2,1])
+    2
+    """
+    return max(deck)
+
+def move_small_joker(deck):
+    """
+    (list of int) -> NoneType
+    
+    Swap the small joker with the card that follows it,
+    consider the deck circular
+    
+    >>>deck = [1,2,3,4,5,7,6]
+    >>>move_small_joker(deck)
+    >>>deck
+    [6,2,3,4,5,7,1]
+    >>>deck = [1,2,3,6,7,4,5]
+    >>>move_small_joker(deck)
+    >>>deck
+    [1,2,3,7,6,4,5]
+    """
+    small_joker = get_small_joker_value(deck)
+    #Saving value of small joker so it can be used after small joker is
+    #overwritten
+    small_joker_index = deck.index(small_joker)
+    #swap once
+    swap_cards(deck, small_joker_index)
+
+def move_big_joker(deck):
+    """
+    (list of int) -> NoneType
+    
+    Move the big joker two cards down the deck. Consider the deck as circular.
+    
+    >>>deck = [1 ,2 ,3 ,4 ,5 ,6 ,7]
+    >>>move_small_joker(deck)
+    >>>deck
+    [2, 7, 3, 4, 5, 6, 1]
+    
+    >>>deck = [1, 2, 3, 7, 4, 5, 6]
+    >>>move_small_joker(deck)
+    >>>deck
+    [1, 2, 3, 4, 5, 7, 6]
+    """
+    #same method as move_small_joker but double swapping
+    big_joker = get_big_joker_value(deck)
+    big_joker_index = deck.index(big_joker)
+    swap_cards(deck, big_joker_index)
+    
+    #big_joker_index changed and must be refound
+    new_index = deck.index(big_joker) 
+    swap_cards(deck, new_index)
+    
+
+def triple_cut(deck):
+    """
+    (list of int) -> NoneType
+    
+    The top of the deck to the top joker switches with the bottom
+    of the deck to the deck to the bottom joker.
+    
+    >>>deck = [1, 2, 3, 4, 5]
+    >>>triple_cut(deck)
+    >>>deck
+    [4, 5, 1, 2, 3]
+    
+    >>>deck = [1, 2, 7, 3, 6, 4, 5]
+    >>>triple_cut(deck)
+    >>>deck
+    [4, 5, 7, 3, 6, 1, 2]
+    """
+    big_joker_index = deck.index(get_big_joker_value(deck))
+    small_joker_index = deck.index(get_small_joker_value(deck))
+    
+    #if the small_joker is closer to the top than the big_joker
+    if big_joker_index > small_joker_index:
+        top_joker = small_joker_index
+        bottom_joker = big_joker_index
+        
+    #Otherwise the top_joker must be closer to the top    
+    else:
+        top_joker = big_joker_index
+        bottom_joker = small_joker_index
+    
+    #slicing deck segments and rearranging    
+    bottom_of_deck = deck[bottom_joker + 1:]
+    deck[bottom_joker + 1:] = deck[:top_joker]
+    deck[:top_joker] = bottom_of_deck
+
+def insert_top_to_bottom(deck):
+    """
+    (list of int) -> NoneType
+        
+    Take the value of bottom card and move that many cards from the top
+    of the deck to the bottom of the deck, just above the bottom card. 
+    If bottom card is big joker, use the small joker
+    
+    >>>deck = [1, 2, 3, 4]
+    >>>insert_top_to_bottom(deck)
+    >>>deck
+    [1, 2, 3, 4]
+    
+    >>>deck = [5, 6, 7, 1, 2, 3, 4]
+    >>>insert_top_to_bottom(deck)
+    >>>deck
+    [2, 3, 5, 6, 7, 1, 4]
+    """    
+    bottom_card_value = deck[-1]
+    
+    #Special case: 
+    if bottom_card_value == get_big_joker_value(deck):
+            bottom_card_value = get_small_joker_value(deck) 
+            
+    top_of_deck = deck[:bottom_card_value]
+    
+    #remove the top of the deck
+    for num in deck[:bottom_card_value]:
+        deck.remove(num)
+        
+    #insert the top of the deck just above the bottom card    
+    for nums in top_of_deck:
+        deck.insert( - 1 , nums)
+
+def get_card_at_top_index(deck):
+    """
+    (list of int) -> int
+    
+    Return the card with the index of the value of the top card.
+    If the top card is the big joker, use the value of the small joker as the
+    index. 
+    
+    >>>get_card_at_top_index([5,1,2,3,4,6,7])
+    6
+    >>>get_card_at_top_index([1,2,3,4,5,6,7,8])
+    2
+    """
+    top_card_value = deck[0]
+    
+    #special case
+    if top_card_value == get_big_joker_value(deck):
+        top_card_value = get_small_joker_value(deck)
+        
+    return deck[top_card_value]
+
+def get_next_keystream_value(deck):
+    """
+    (list of int) -> int
+    
+    Return the next keystream value if the keystream before is invalid.
+    
+    >>>deck = [1,2,3,4,5,6,7,8,9]
+    >>>get_next_keystream_value(deck)
+    1
+    >>>get_next_keystream_value(deck
+    2
+    """
+    #call all 5 steps to get the keystream value
+    move_small_joker(deck)
+    move_big_joker(deck)
+    triple_cut(deck)
+    insert_top_to_bottom(deck) 
+    key = get_card_at_top_index(deck)
+    
+    #if keystream is a joker, find next keystream until it is valid        
+    while get_card_at_top_index(deck) == get_small_joker_value(deck) or \
+       get_card_at_top_index(deck) == get_big_joker_value(deck):
+    
+            move_small_joker(deck)
+            move_big_joker(deck)
+            triple_cut(deck)
+            insert_top_to_bottom(deck) 
+            key = get_card_at_top_index(deck)  
+            
+    return key      
+#Personal Note: Question this like you saw it running from the scene of a crime
+
+def process_messages(deck, list_of_messages, decrypt_or_encrypt):
+    """
+    (list of int, list of str, str) -> list of str
+    
+    Return a list of encrypted or decrypted messages,
+    in the same order as they appear in the given list of messages.
+    
+    >>>deck = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    >>>process_messages(deck, ['HI','SUP'], ENCRYPT)
+    ['IK', 'TAV']
+    >>>deck = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    >>>process_messages(deck, ['IK', 'TAV'], DECRYPT)
+    ['HI', 'SUP']
+    """
+    final_product = []
+    
+    #A loop for each string, when the string is done product become '' again
+    for string in list_of_messages:
+        product = ''
+        
+        #A loop for each letter in the string, keystream changes for each letter
+        for letter in string:
+            
+            key = (get_next_keystream_value(deck)) 
+            
+            if decrypt_or_encrypt == ENCRYPT:
+                product += (encrypt_letter(letter, key))
+            if decrypt_or_encrypt == DECRYPT:
+                product += (decrypt_letter(letter, key))
+              
+        final_product.append(product)        
+        
+    return final_product
+            
+def read_messages(file):
+    """
+    (file open for reading) -> list of str
+    
+    Return the contents of the file as a list of messages, 
+    in the order in which they appear in the file.
+    
+    >>>file = open('file_name.txt', 'r')
+    >>>read_messages(file)
+    ['FIRST LINE', 'SECOND LINE']
+    """
+    modified_content = []
+    
+    for line in file:
+        line = clean_message(line)
+        line = line.strip()
+        modified_content.append(line)
+        
+    return modified_content
+
+def is_valid_deck(deck):
+    """
+    (list of int) -> bool
+    
+    Return True if deck contains only intergers from 1 to the length of the
+    deck.
+    
+    >>>is_valid_deck([1,2,3,4])
+    True
+    >>>is_valid_deck([0,10,4,666])
+    False
+    """
+    #create temporary deck so that it can be sorted and easily evaluated
+    temp = deck.copy()
+    temp.sort()
+    
+    #checks if all values are between and not including 0 and the length of the
+    #deck
+    for num in temp:
+        if (num not in range(len(temp) + 1)) or num == 0:
+            return False
+    
+    #checks if the highest value is equivalent to the length of the deck
+    if temp[len(temp)-1] != len(deck):
+        return False
+    
+    #checks that all values from 1 to the length of the deck + 1 are in the deck     
+    for value in range(len(deck) - 1):
+        if temp[value] != (temp[value + 1]) - 1:
+            return False         
+        
+    else:
+        return True
+    
+    
+def read_deck(file):
+    """
+    (file open for reading) -> list of int
+    
+    Return numbers that are in the file in a list with the order they appeared
+    
+    >>>deck = open('deck1.txt', 'r')
+    >>>read_deck(deck)
+    [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 3, 6, 9, 12, 15, 18, 21, 24, 27, 2, 5,
+    8, 11, 14, 17, 20, 23, 26]
+    """
+    deck = []
+       
+    cards = file.read()
+    cards = cards.split()
+    
+    for card in cards:
+        deck.append(int(card))
+    
+    return deck

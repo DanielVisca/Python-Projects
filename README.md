@@ -1,2 +1,2 @@
 # Python-Projects
-A list of projects that I have completed or am currently working on in Python
+Some of the python projects completed from september to December 2015

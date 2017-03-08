@@ -1,0 +1,12 @@
+Results for serving approach using Pat's suggestion:
+Total profit: $23.0
+Customer served: 3
+Results for serving approach using Mat's suggestion:
+Total profit: $19.0
+Customer served: 3
+Results for serving approach using Max's suggestion:
+Total profit: $19.0
+Customer served: 3
+Results for serving approach using Pac's suggestion:
+Total profit: $28.0
+Customer served: 4

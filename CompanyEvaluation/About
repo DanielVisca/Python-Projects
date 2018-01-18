@@ -1,0 +1,12 @@
+What I want for this program is to connect to an API on a stock market and be able to evaluate a company
+I want to evaluate if it is over valued or under valued
+I want to evaluate if it there is a reasonable volume (What info can I get from this?
+
+
+
+MVP: evaluate if a stock is over valued or under valued
+Task. Connect to quandl API
+Task. Find out how to switch API for different ticker symbols
+Task. pull info from API
+Task. evaluate the price the stock should be (Subjective and based off of numbers only
+Task. Compare to stock price and determine if over or under value. Return which and by how much as JSON

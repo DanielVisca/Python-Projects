@@ -115,3 +115,4 @@ class StockValue:
 
 
 s = StockValue("MSFT")
+s.API

@@ -1,0 +1,73 @@
+import shopify
+
+class Order():
+    def __init__(self, email):
+        """
+        Initialize an order
+
+        :param variant_id: Integer
+        :param quantity: Integer
+        :param email: String
+        """
+        self.API_KEY = '304f648523a9a6addecf48d0002c24e1'
+        self.PASSWORD = '0312f477ae629b38a2c6dc2fdf71e7b2'
+        self.SHOP_NAME = 'jubilantjelly'
+
+        self.shop_url = "https://%s:%s@%s.myshopify.com/admin" % (self.API_KEY, self.PASSWORD, self.SHOP_NAME)
+        shopify.ShopifyResource.set_site(self.shop_url)
+        self.shop = shopify.Shop.current()
+
+        self.order = shopify.Order()
+        self.order.email = email
+        #self.order.note = "A very important note"
+        #eventually this should be properly fulfilled an not manually entered
+        self.order.fulfillment_status = "fulfilled"
+        self.order.send_receipt = True
+        self.order.send_fulfillment_receipt = False
+        self.order.line_items = []
+
+    def add_item(self, item):
+        """
+        Add an item to the order
+
+        :param item: dict eg: {"variant_id": 1234567, "quatity": 4 }
+        :return: Nonetype
+        """
+        #Place tests here to see if this is proper format
+        self.order.line_items.append(item)
+
+    def complete(self):
+        """
+        Complete the Order
+
+        :return: NoneType
+        """
+        success = self.order.save()
+        print(success)
+
+    def update_key_and_password(self, API_KEY, PASSWORD):
+        """
+        Update the API key
+
+        :param API_KEY: Integer
+        :return: NoneType
+        """
+        self.API_KEY = API_KEY
+        self.PASSWORD = PASSWORD
+
+    def update_shop_name(self, shop_name):
+        """
+        Update the Shops name
+
+        :param shop_name:
+        :return:
+        """
+        self.SHOP_NAME = shop_name
+
+    def update_url(self):
+        """
+        Update the url after Shop_name, key_and_password are updated
+
+        :return: NoneType
+        """
+        self.shop_url = "https://%s:%s@%s.myshopify.com/admin" % (self.API_KEY, self.PASSWORD, self.SHOP_NAME)

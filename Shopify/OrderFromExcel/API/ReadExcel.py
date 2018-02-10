@@ -1,7 +1,8 @@
 import xlrd
 import os
 
-class ExcelOrder:
+
+class ReadExcel:
     """
     Take in an Excel sheet, for every line create an order request.
     Every order request will be added to a Queue.
@@ -15,8 +16,8 @@ class ExcelOrder:
         initialize Excel order
         :param excelFile: The name and file type of the excel file to be ordered from
         """
-        #Personal Note: Should I have the queue existing in each instance or elsewhere?
-        #Answer: I should have it exist elsewhere, that way if several excel sheets are being ordered from at the same time their wont be any overlap
+        # Personal Note: Should I have the queue existing in each instance or elsewhere?
+        # Answer: I should have it exist elsewhere, that way if several excel sheets are being ordered from at the same time their wont be any overlap
         self.excelFile = excelFile
         self.order_queue = queue
 
@@ -28,15 +29,15 @@ class ExcelOrder:
         :return: NoneType
         """
 
-        file_location =  os.path.dirname(os.path.abspath(__file__)) +"/" +  self.excelFile + ".xlsx"
+        file_location = os.path.dirname(os.path.abspath(__file__)) + "/" + self.excelFile + ".xlsx"
 
-        #file_location = "C:/Users/danie/desktop/" + self.excelFile + ".xlsx"
+        # file_location = "C:/Users/danie/desktop/" + self.excelFile + ".xlsx"
         workbook = xlrd.open_workbook(file_location)
 
         for i in range(workbook.nsheets):
             sheet = workbook.sheet_by_index(i)
             for n in range(sheet.nrows):
-                line = [sheet.cell_value(n, 0),sheet.cell_value(n, 1)]
+                line = [sheet.cell_value(n, 0), sheet.cell_value(n, 1)]
                 self.request(line)
 
     def request(self, product):
@@ -46,4 +47,3 @@ class ExcelOrder:
         :return: NoneType
         """
         self.order_queue.add(product)
-

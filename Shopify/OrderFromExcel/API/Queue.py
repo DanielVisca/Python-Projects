@@ -51,10 +51,5 @@ class Queue:
         """
         return self._data == []
 
-
-"""
-#Personal Note: remember what this is for and if it is necessary or looks good
 if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-"""
+    pass

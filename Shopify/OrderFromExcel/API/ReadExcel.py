@@ -7,8 +7,16 @@ class ReadExcel:
     Take in an Excel sheet, for every line create an order request.
     Every order request will be added to a Queue.
 
-    extra additions to keep in mind:
-    -give an approx. wait time
+    Precondition: Excel File format: The email of the client must be in the first row. And the shop to order from must
+    be in the second row. All following products will be ordered from the given shop until a new shop is specified.
+    Confirmation will be sent to the given email until a new email is specified:
+        Ex format:
+        email               |  client@email.com
+        shop                |  Jubilant Jelly
+        Almond Butter       |  4
+        Jelly Fish Sandwich |  2
+        shop                |  Jubilant Jam
+        Peanut Butter       |  1
     """
 
     def __init__(self, excelFile, queue):
@@ -47,3 +55,6 @@ class ReadExcel:
         :return: NoneType
         """
         self.order_queue.add(product)
+
+if __name__ == '__main__':
+    pass

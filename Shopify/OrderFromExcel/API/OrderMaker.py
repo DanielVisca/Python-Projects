@@ -1,11 +1,17 @@
 import requests
 from API.Order import Order
-from API.Store import Store
-import json
+import base64
+from os.path import normpath, basename
+
+#from API.Store import Store
+#import json
 
 """
-Personal note:  - because I take in and save the queue, the original queue may remain unchanged. This would not be scalable. Make sure thisis not the case
+Personal note:  - because I take in and save the queue, the original queue may remain unchanged. This would not be
+                scalable. Make sure this is not the case
                 - if one line returns an error, skip to the next
+                -Somehow two instances of this are made at the same time, This creates a double order! Also possibly the
+                cause of the self error
 """
 
 
@@ -18,7 +24,11 @@ class ReadQueue:
 
     def __init__(self, queue, known_stores):
         """
-        Initialize graphQL
+        Initialize Reading from the Queue
+
+        :param self:
+        :param queue: Queue
+        :param known_stores: list of stores
         """
         self.order_queue = queue
         self.email = ""
@@ -28,32 +38,17 @@ class ReadQueue:
 
     def query_from_queue(self):
         """
-        Personal Note: #This is messy. Breakdown of what I want to do. pop from queue,
-        freely add products to the cart, (if an order is attempted to be completed before it can, throw an error).
-        An order cannot be completed unless the shop name is provided and an email is provided. if the first row
-         says email, add the email, if it says shop add the shop.
-        Broken down the rules are... always add a product to the cart(this has to be an else function. When the queue
-         is empty, order. When an email is added and their previously existed an email, order the cart then update the email.
-        When a new shop is listed, the cart does not necessarily need to be ordered right away because maybe more
-        products will be added after (side effect of being able to add products without specifying a store(problem cant
-        do that. cant add an item to the cart if I dont know the store. Precondition Shop must be specified before
-        products. email isnt necessary until the end.
-        pop from queue
-        freely add products to the cart
-        order cannot be completed unless the shop name is provided and an email is provided.
-        if the first row
-        says email, add the email, if it says shop add the shop.
-        When the queue is empty, order
-
         For every item in the queue, make the given query
 
-        :param query:
-        :return:
+        :param self:
+        :return: NoneType
         """
-
         while not self.order_queue.is_empty():
             line = self.order_queue.remove()
             if line[0] == "email":
+                if self.email != "":
+                    self.new_order.complete()
+                    self.new_order = Order(store,line[0])
                 self.email = line[1]
 
             elif line[0] == "shop":
@@ -69,9 +64,9 @@ class ReadQueue:
                 if self.new_order != None:
                     self.new_order.complete()
 
-                self.new_order = Order(store, self.email)
+                self.new_order = Order(self.store, self.email)
 
-            # could be referenced before existing
+            # This does not account for blank lines, typos etc...
             else:
                 self.product = self.prod_to_id(line[0])
                 self.quantity = int(line[1])
@@ -82,88 +77,46 @@ class ReadQueue:
 
     def prod_to_id(self, product):
         """
-        return the variant id of the given product
+        Precondition: the product name must be similar to the product handle as made by the store owner:
+            Ex: product "Almond Butter", handle "almond-butter". This will work
+                product "Almond Butter", handle "coffee". This will not work
+
+        Return the variant id of the given product
+
         :param self:
-        :param product:
-        :return:
+        :param product: String
+        :return: String
         """
-        dict = {"Almond Butter": "6797069778989", "Peanut Butter": "1573432655890",
-                "Jelly Fish Sandwich": "6862783905837"}
-        if dict[product]:
-            return dict[product]
-        # currently using REST, I want to us graphQL
-        # the url could potentially have '/admin' in it already
-        #
-        # products = self.api_call("/products.json")
-        # print(products)
-        # variant_id = ""
-        # for item in products:
-        #     print(item)
-        #     if item["title"] == self.product:
-        #         variant_id = item["variants"]["id"]
-        # if variant_id == "":
-        #     return "An Item you asked for does not exist with that name"
-        #         # Manual Query
-        # else:
-        #     return variant_id
-    # def add_headers(self, key, value):
-    #     """
-    #     Add a header to self
-    #
-    #     :param key: String
-    #     :param value: String
-    #     :return: NoneType
-    #     """
-    #     self.headers = {key: value}
+        product = product.replace(" ","-").lower()
+        # graphQL query
+        query = '{shop{products(first:1, query:"title=' \
+                '' + product + '"){edges{node{variants(first:1){edges{node{id}}}}}}}}'
 
+        response = self.make_query(query)
+        # variant_id is returned as a scalar
+        encoded_variant_id = response['data']['shop']['products']['edges'][0]['node']['variants']['edges'][0]['node']['id']
+        decoded_variant_id_url = base64.b64decode(encoded_variant_id)
+        # convert tp string
+        decoded_variant_id = basename(normpath(decoded_variant_id_url)).decode("utf-8")
+        return decoded_variant_id
 
-    # def add_store_name(self, store_name):
-    #     """
-    #     Pesonal Note: Make it clear that this should be the same as the storename seen in the url
-    #     Add store name to self, convert to
-    #     currently doesnt convert to useful format for some reason
-    #     :param store_name: String
-    #     :return:
-    #     """
-    #     # Convert to useful format
-    #     self.store_name = store_name.replace(" ", "")
-    #     self.store_name = self.store_name.lower()
-    #     self.url = 'https://' + self. store_name + '.myshopify.com'
+        # dict = {"Almond Butter": "6797069778989", "Peanut Butter": "1573432655890",
+              #  "Jelly Fish Sandwich": "6862783905837"}
 
-    def make_query(self, query, graphQL=True):
+    def make_query(self, query):
         """
         Return query response
 
         :param query: String
+        :param graphQL: Boolean  clarify if the query is for a graphQL API
         :return: Dict
         """
-        # self.url = self.new_order.shop_url
-        # self.add_headers(self.new_order.API_KEY, self.new_order.PASSWORD)
-        if graphQL:
-            url = self.store.get_url_graphQL()
-        else:
-            url = self.store.get_url
-        request = requests.post(url, json={'query': query}, headers=self.store.get_headers())
+
+        request = requests.post(self.store.get_url_graphQL(), json={'query': query}, headers=self.store.get_headers())
         if request.status_code == 200:
             return request.json()
         else:
             raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
-    def api_call(self, query):
-        return None
-        # url = self.store.get_url() + query
-        # response = requests.get()
-        # if response.status_code == 200:
-        #     print(json.loads(response.content.decode('utf-8')))
-        #     return json.loads(response.content.decode('utf-8'))
-        # else:
-        #     return []
-
-
-        # request = requests.post("https://jubilantjelly.myshopify.com/admin/products.json", headers=self.store.get_headers())
-        # if request.status_code == 200:
-        #     return request.json()
-        # else:
-        #     raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
-        #temp:
-
+if __name__ == '__main__':
+    pass

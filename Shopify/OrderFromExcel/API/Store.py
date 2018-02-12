@@ -55,7 +55,7 @@ class Store:
 
     def set_header_value(self, value):
         """
-        Set the Stores Header value (Key is already known)
+        Set the Stores Header value (Key is already known). This allows for Queries to be made to the store
 
         :param value: String
         :return:

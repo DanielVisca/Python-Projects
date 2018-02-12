@@ -1,13 +1,12 @@
 from API.Queue import Queue
 from API.ReadExcel import ReadExcel
-from API.OrderMaker import ReadQueue
+from API.ReadQueue import ReadQueue
 from API.Store import Store
 """
 This Program reads from an Excel file, adds each line of the file to a queue (For Scalability). The class 'ReadQueue',
 reads each item in the Queue, accesses the store as an admin and places an order for the Product.
-
-
 """
+
 if __name__ == "__main__":
     # Create known store 'jelly' and fill in the info to access the API
     jelly = Store("Jubilant Jelly")
@@ -21,13 +20,11 @@ if __name__ == "__main__":
     jam.set_password("1bf61789bbb3ba88ae5b8bee6bc220ed")
     jam.set_header_value("462e6557ff3cf5dbda92eccb56ee85ea")
 
-    #all known stores that this program will be abe to access
+    # all known stores that this program will be abe to access
     known_stores = [jelly, jam]
-
 
     q = Queue()
     r = ReadExcel("OrderFromThisExcelFile", q)
     r.order_from_excel()
     rq = ReadQueue(q, known_stores)
-    rq.query_from_queue()
 

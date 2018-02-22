@@ -9,8 +9,8 @@ with here or elsewhere.
 """
 
 """
-Note to self. The reason I didnt originally calculate Tax was becasue contributions to RRSP are a Tax Deduction.
-I think I should calulate the tax, Find RRSP contributions than recalculate tax? Is this needless?
+Note to self. The reason I didnt originally calculate Tax was because contributions to RRSP are a Tax Deduction.
+I think I should calculate the tax, Find RRSP contributions than recalculate tax? Is this needless?
 """
 class Savings:
     def __init__(self, income, age, province, annual_budget=30000, in_TFSA=0):
@@ -27,6 +27,8 @@ class Savings:
         # Annual
         self.annual_budget = int(annual_budget)
         self.income = int(income)
+        self.og_taxable_income = int(income)
+        self.taxable_income = int(income)
         self.ct = CanadaTax()
         self.income_after_tax = self.ct.after_tax_income(self.income, self.province)
 
@@ -41,7 +43,42 @@ class Savings:
         self.total_RRSP = 0
 
         self.TFSA_eligible = self.TFSA_eligible()
-        self.annual_savings_location()
+
+        # put tax return into the appropriate savings locations. If that location is tax exempt recalculate taxes
+        while self.amount_to_save != 0:
+            self.annual_savings_location()
+
+            self.taxable_income = self.taxable_income - self.annual_RRSP
+            # Currently the refund is not correct
+            """ walkthrough. income is 80,000 after tax say it is 65,000 I contribute 20,000 to RRSP. now I should be
+            taxed as if I made 60,000. The money I get back would be the tax difference, say 60,000 after tax is 45,000
+            I will not be taxed on the 20,000, to so this I would do (amount after tax of 80,000 - amount after tax of
+            60,000) which is the same as (65,000 - 45,000) = 20,000. So I would get 20,000 dollars back in tax?.
+
+            How about this way. The amount I am taxed on 80,000 - the amount I am taxed on 60,000 (15,000 - 15,000)
+            """
+            self.RRSP_refund = self.ct.amount_taxed(self.og_taxable_income, self.province) - \
+                               self.ct.amount_taxed(self.taxable_income, self.province)
+
+            #self.RRSP_refund = self.income_after_tax - self.ct.after_tax_income(self.taxable_income, self.province)
+
+            # If the annual max RRSP contributions have been made, put the rest in annual savings
+            # Maybe I should account for it going in th TFSA instead
+            if (self.max_RRSP_contribution() - self.annual_RRSP) == 0:
+                self.annual_savings = self.RRSP_refund + self.amount_to_save
+                self.amount_to_save = 0
+
+            elif self.RRSP_refund > 0:
+                self.amount_to_save = self.RRSP_tax_return
+                self.RRSP_refund = 0
+
+        # This might not be the appropiate location as this function isnt initiated every year. It would go best
+        # in the functions that calculate more than one year
+        #self.TFSA_eligible += 5500
+        print("TFSA: ", self.annual_TFSA)
+        print("RRSP: ", self.annual_RRSP)
+        print("Savings: ", self.annual_savings)
+        print("Amount to save: ", self.amount_to_save)
 
     def annual_savings_location(self):
 
@@ -54,9 +91,6 @@ class Savings:
         else:
             self.TFSA_contribution()
             self.RRSP_contribution()
-        print("TFSA: ", self.annual_TFSA)
-        print("RRSP: ", self.annual_RRSP)
-        print("Savings: ", self.amount_to_save)
 
 
     def total_contributions_for_FI(self):
@@ -78,13 +112,16 @@ class Savings:
 
         :return: NoneType
         """
-        max_contribution = self.max_RRSP_contribution()
+        max_contribution = self.max_RRSP_contribution() - self.annual_RRSP
 
-        # Note to Self: make sure that self.annual_RRSP isnt just a pointer to self.amount to save but takes on the
+        # Note to Self: make sure that self.annual_RRSP isn't just a pointer to self.amount to save but takes on the
         #  number
         if self.amount_to_save < max_contribution:
             self.annual_RRSP = self.amount_to_save
             self.amount_to_save = 0
+            self.taxable_income -= self.annual_RRSP
+            # amount saved by tax benefits should be refactored into "amount to save" and savings locations should be
+            # rerun
         else:
             self.annual_RRSP = max_contribution
             self.amount_to_save -= max_contribution
@@ -95,17 +132,18 @@ class Savings:
 
         :return: NoneType
         """
+        # if this gets rerun twice in a year (it will add two years of contribution room
         if self.amount_to_save <= self.TFSA_eligible:
             self.annual_TFSA = self.amount_to_save
             # this sets TFSA_eligible to be ready for next years calculations. 5500 is hardcoded based on th assumption
             # that it will always be the annual increase
-            self.TFSA_eligible -= (self.amount_to_save + 5500)
+            self.TFSA_eligible -= (self.amount_to_save)
             self.amount_to_save = 0
 
         else:
             self.annual_TFSA = self.TFSA_eligible
-            self.TFSA_eligible = 5500
             self.amount_to_save -= self.TFSA_eligible
+            self.TFSA_eligible = 0
 
     def savings_contributions(self):
         """

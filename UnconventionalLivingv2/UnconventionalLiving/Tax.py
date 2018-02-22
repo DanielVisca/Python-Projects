@@ -77,11 +77,18 @@ class CanadaTax:
             "Northwest Territories": {"bucket": self.nwt_tax_buckets, "tax_max": self.nwt_tax_max},
             "Nunavut": {"bucket": self.nunavut_tax_buckets, "tax_max": self.nunavut_tax_max}
         }
+    def amount_taxed(self, income, province):
+        income = int(income)
+        federal_tax = self.compute_tax(income, province)
+        provincial_tax = self.compute_tax(income, province)
+        total_tax = round(federal_tax + provincial_tax, 2)
+        return total_tax
+
     def after_tax_income(self, income, province):
         income = int(income)
         federal_tax = self.compute_tax(income, province)
-        ontario_tax = self.compute_tax(income, province)
-        total_tax = round(federal_tax + ontario_tax, 2)
+        provincial_tax = self.compute_tax(income, province)
+        total_tax = round(federal_tax + provincial_tax, 2)
         return round((income - total_tax), 2)
 
     def compute_tax(self, income, province):

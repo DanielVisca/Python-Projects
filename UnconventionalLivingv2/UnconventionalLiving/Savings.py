@@ -8,7 +8,10 @@ Amount that is wanted as an annual budget needs to be taken into consideration, 
 with here or elsewhere.
 """
 
-
+"""
+Note to self. The reason I didnt originally calculate Tax was becasue contributions to RRSP are a Tax Deduction.
+I think I should calulate the tax, Find RRSP contributions than recalculate tax? Is this needless?
+"""
 class Savings:
     def __init__(self, income, age, province, annual_budget=30000, in_TFSA=0):
         """
@@ -24,8 +27,10 @@ class Savings:
         # Annual
         self.annual_budget = int(annual_budget)
         self.income = int(income)
-        self.income_after_tax = CanadaTax(self.income, self.province)
-        self.amount_to_save = self.income - self.annual_budget
+        self.ct = CanadaTax()
+        self.income_after_tax = self.ct.after_tax_income(self.income, self.province)
+
+        self.amount_to_save = self.income_after_tax - self.annual_budget
         self.annual_TFSA = 0
         self.annual_RRSP = 0
         self.annual_savings = 0
@@ -42,6 +47,9 @@ class Savings:
 
         if self.income > 70000:
             self.RRSP_contribution()
+            # Here I have to take into consideration that RRSPs are Tax exempt Therefore my "after tax" has to be
+            # recalculated. This seems circular
+            # RRSP_contribution_after_tax = self.ct.after_tax_income(self.income - self.annual_RRSP, self.province)
             self.TFSA_contribution()
         else:
             self.TFSA_contribution()
@@ -89,10 +97,10 @@ class Savings:
         """
         if self.amount_to_save <= self.TFSA_eligible:
             self.annual_TFSA = self.amount_to_save
-            self.amount_to_save = 0
             # this sets TFSA_eligible to be ready for next years calculations. 5500 is hardcoded based on th assumption
             # that it will always be the annual increase
             self.TFSA_eligible -= (self.amount_to_save + 5500)
+            self.amount_to_save = 0
 
         else:
             self.annual_TFSA = self.TFSA_eligible
@@ -151,7 +159,7 @@ class Savings:
         option1 = 0.18 * self.income
         cap_contribution = 24270
 
-        if option1 > cap_contribution:
+        if option1 <= cap_contribution:
             max_contribution = option1
         else:
             max_contribution = cap_contribution

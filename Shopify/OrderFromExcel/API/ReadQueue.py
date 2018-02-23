@@ -26,29 +26,42 @@ class ReadQueue:
         self.accept_orders = False
         self.query_from_queue()
 
+    # make orders
+    def read_queue(self):
+        while not self.order_queue.is_empty():
+            order = self.order_queue.remove()
+
     # Called when class is initialized
     def query_from_queue(self):
-        """
-        For every item in the queue, make the given query
+        while not self.order_queue.is_empty:
+            order = self.order_queue.remove()
+            self.new_order = Order(order["shop"], order["email"])
+            # Now I need to add the items and quantity to the order. To do this, I need the variant_ids
+            #product_titles = []
+            #for product in self.new_order["products"]:
 
-        :param self:
-        :return: NoneType
-        """
-        while not self.order_queue.is_empty():
-            line = self.order_queue.remove()
-
-            if line[0] == "email":
-                self.is_email(line)
-
-            elif line[0] == "shop":
-                self.is_shop(line)
-
-            else:
-                # Only accepts orders when the shop is a known shop
-                if not self.accept_orders or line[0] == "":
-                    continue
-
-                self.is_product(line)
+    # def query_from_queue(self):
+        # """
+        # For every item in the queue, make the given query
+        #
+        # :param self:
+        # :return: NoneType
+        # """
+        # while not self.order_queue.is_empty():
+        #     line = self.order_queue.remove()
+        #
+        #     if line[0] == "email":
+        #         self.is_email(line)
+        #
+        #     elif line[0] == "shop":
+        #         self.is_shop(line)
+        #
+        #     else:
+        #         # Only accepts orders when the shop is a known shop
+        #         if not self.accept_orders or line[0] == "":
+        #             continue
+        #
+        #         self.is_product(line)
 
     # Helper Function for query_from_queue
     def is_email(self,line):

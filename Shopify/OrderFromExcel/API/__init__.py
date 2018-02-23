@@ -26,5 +26,6 @@ if __name__ == "__main__":
     q = Queue()
     r = ReadExcel("OrderFromThisExcelFile", q)
     r.order_from_excel()
-    rq = ReadQueue(q, known_stores)
+    print(q._data)
+    #rq = ReadQueue(q, known_stores)
 

@@ -1,5 +1,7 @@
 import datetime
 from UnconventionalLiving.Tax import CanadaTax
+from UnconventionalLiving.Deductions import Deductions
+
 """
 Things to consider here, Full income before tax might be good to know, to calculate best places to put money,
 If I assume to always contribute to TFSA first than RRSP I should state as much in the info sheet.
@@ -9,11 +11,12 @@ with here or elsewhere.
 """
 
 """
-Note to self. The reason I didnt originally calculate Tax was because contributions to RRSP are a Tax Deduction.
-I think I should calculate the tax, Find RRSP contributions than recalculate tax? Is this needless?
+How much is saved by RRSP contribution is off
 """
+
+
 class Savings:
-    def __init__(self, income, age, province, annual_budget=30000, in_TFSA=0):
+    def __init__(self, income, age, province, self_employed, annual_budget=30000, in_TFSA=0):
         """
         Initialize an instance of savings with different savings options
 
@@ -23,6 +26,7 @@ class Savings:
         """
         self.age = int(age)
         self.province = province
+        self.self_employed = self_employed
 
         # Annual
         self.annual_budget = int(annual_budget)
@@ -30,7 +34,16 @@ class Savings:
         self.og_taxable_income = int(income)
         self.taxable_income = int(income)
         self.ct = CanadaTax()
-        self.income_after_tax = self.ct.after_tax_income(self.income, self.province)
+
+        # Deductions
+        self.deductions = Deductions(self.income, self.province, self.self_employed)
+        self.CPP_contribution = self.deductions.CPP_deductions()
+        self.EI_deduction = self.deductions.EI_dedicution()
+
+        taxed = self.ct.after_tax_income(self.income, self.province)
+        print("After tax: ", taxed)
+        self.income_after_tax = taxed  - self.EI_deduction - self.CPP_contribution
+        print("After tax and deductions: ", self.income_after_tax)
 
         self.amount_to_save = self.income_after_tax - self.annual_budget
         self.annual_TFSA = 0
@@ -44,7 +57,6 @@ class Savings:
 
         self.TFSA_eligible = self.TFSA_eligible()
 
-        # put tax return into the appropriate savings locations. If that location is tax exempt recalculate taxes
         while self.amount_to_save != 0:
             self.annual_savings_location()
 
@@ -59,7 +71,7 @@ class Savings:
             """
             self.RRSP_refund = self.ct.amount_taxed(self.og_taxable_income, self.province) - \
                                self.ct.amount_taxed(self.taxable_income, self.province)
-
+            print("With this RRSP contribution, you will save ", round(self.RRSP_refund, 2), " in taxes")
             #self.RRSP_refund = self.income_after_tax - self.ct.after_tax_income(self.taxable_income, self.province)
 
             # If the annual max RRSP contributions have been made, put the rest in annual savings
@@ -69,26 +81,26 @@ class Savings:
                 self.amount_to_save = 0
 
             elif self.RRSP_refund > 0:
-                self.amount_to_save = self.RRSP_tax_return
                 self.RRSP_refund = 0
 
         # This might not be the appropiate location as this function isnt initiated every year. It would go best
         # in the functions that calculate more than one year
         #self.TFSA_eligible += 5500
-        print("TFSA: ", self.annual_TFSA)
-        print("RRSP: ", self.annual_RRSP)
-        print("Savings: ", self.annual_savings)
-        print("Amount to save: ", self.amount_to_save)
+
+        print("suggested amount to contribute to your TFSA: ", round(self.annual_TFSA, 2))
+        print("suggested amount to contribute to your RRSP: ", round(self.annual_RRSP, 2))
+        print("suggested amount to contribute to your Unregistered Savings: ", round(self.annual_savings, 2))
 
     def annual_savings_location(self):
 
         if self.income > 70000:
+            print("It is suggested that you contribute to your RRSP before you Contribute to your TFSA")
             self.RRSP_contribution()
-            # Here I have to take into consideration that RRSPs are Tax exempt Therefore my "after tax" has to be
-            # recalculated. This seems circular
-            # RRSP_contribution_after_tax = self.ct.after_tax_income(self.income - self.annual_RRSP, self.province)
             self.TFSA_contribution()
+
         else:
+            print("It is suggested that you contribute to your TFSA before you Contribute to your RRSP")
+
             self.TFSA_contribution()
             self.RRSP_contribution()
 
@@ -210,3 +222,4 @@ class Savings:
 
         :return:
         """
+

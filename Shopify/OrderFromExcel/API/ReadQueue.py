@@ -123,7 +123,7 @@ class ReadQueue:
             self.new_order.complete()
 
     # Helper Function for is_product
-    def prod_to_id(self, product):
+    def prod_to_id(self, products):
         """
         Precondition: the product name must be similar to the product handle as made by the store owner:
             Ex: product "Almond Butter", handle "almond-butter". This will work
@@ -132,10 +132,15 @@ class ReadQueue:
         Return the variant id given a product title
 
         :param self:
-        :param product: String
+        :param product: List of String
         :return: String
         """
-        product = product.replace(" ","-").lower()
+        # ToDo make one query for all products
+        #query = '{shop{products(first:1, query:"title='
+        #for product in products:
+            #query += '{shop{products(first:1, query:"title=' \
+            #'' + product + '"){edges{node{variants(first:1){edges{node{id}}}}}}}}'
+        product = products.replace(" ","-").lower()
         # graphQL query
         query = '{shop{products(first:1, query:"title=' \
                 '' + product + '"){edges{node{variants(first:1){edges{node{id}}}}}}}}'

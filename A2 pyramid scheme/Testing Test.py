@@ -1,3 +1,5 @@
+"""Danial hates Docstrings"""
+
 class LinkedListNode:
     """
     Node to be used in linked list
